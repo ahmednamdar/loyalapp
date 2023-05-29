@@ -1,0 +1,291 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Harmattan&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="body">
+
+        <img id="logo" src={% static 'logo.jpg' %} alt="">
+
+        <h1> السيد:{{custom.first_name}} {{custom.last_name}}</h1>
+        <h1>رقم البطاقة: {{custom.identity}}</h1>
+        <h1 class="name">B A Y T H A L A B</h1>
+        <footer>
+            <h1>لقمة هنيئة بطعمتنا الحلبية</h1>
+        </footer>
+    </div>
+</body>
+<style>
+    body{
+        
+        font-family: 'Harmattan', sans-serif;
+    }
+    .body{
+        background:#F3EFE4;
+        color:#42301C;
+        text-align:center;
+        width:1098px;
+        height:648px;
+        
+
+    }
+
+
+
+    #logo{
+        
+        margin: auto;
+
+        width:250px;
+    }
+    footer{
+        background:#42301C;
+        color:#F3EFE4;
+        padding:5px;
+    }
+    
+    h1{
+        font-weight: bold;
+        font-size:50px;
+    }
+</style>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;500&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.1/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script  src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="body">
+        <img id="front" src={% static 'front.png' %}>
+        {% comment %} <img id="logo" src={% static 'logo.jpg' %} alt="good"> {% endcomment %}
+        
+        <h1 class="h11"> {{custom.first_name}} {{custom.last_name}}</h1>
+        <h1 class="h33"> {{custom.identity}}</h1>
+     
+    
+        
+    </div>
+    <div>
+        <img id="back" src={% static 'back.png' %}>
+    </div>
+    <button class="button">Download</button>
+    <script defer>
+        const identityNum = document.querySelector('h1.h33');
+        const  identityValue = identityNum.innerText.replace(',',"");
+        identityNum.innerText = identityValue
+
+        const btn = document.querySelector('.button');
+        const div = document.querySelector('.body')
+        const backImg = document.querySelector("#back")
+        console.log(div.innerHTML)
+//         const doc = new jspdf.jsPDF();
+        
+//         btn.addEventListener('click',()=>{
+            
+//             doc.html(div.innerHTML, {
+//    callback: function (doc) {
+//      doc.save();
+//    },
+//    x: 10,
+//    y: 10
+// });
+//             // doc.save('a4.pdf')
+//         })
+
+    btn.addEventListener('click',()=>{
+        html2canvas(div).then(canvas => {
+            html2canvas(backImg).then(function(canvas2){
+
+
+                
+                // Create a new PDF document
+                const pdf = new jspdf.jsPDF({
+                orientation: 'landscape',
+                unit: 'in',
+                format: [4, 7] // width, height
+              });
+              
+                // Add the canvas to the PDF document
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0);
+                  pdf.addPage();
+                  
+                  pdf.addImage(canvas2.toDataURL(), 'png', 0, 0);
+                // Save the PDF document
+                pdf.save('myPDF.pdf');
+            })
+            }
+
+);
+    })
+    </script>
+</body>
+<style>
+    /* *{
+        margin:0;
+        padding:0;
+        box-sizing: border-box;
+    }
+    .body{
+        background:#F3EFE4;
+        color:#42301C;
+        text-align:center;
+        width:700px;
+
+        height:400px;
+        margin-top: 10px;
+
+    }
+    #logo{
+        
+        margin: auto;
+
+        width:120px;
+    }
+    .lower{
+        background:#42301C;
+        color:#F3EFE4;
+        padding:5px;
+    }
+    
+    h1{
+        font-weight: bold;
+        font-size:24px;
+    }
+  
+
+    .lower{
+        font-family: 'Cairo', sans-serif;
+
+         top:50px;
+  margin-top: 190px;
+  padding: 15px;
+  
+}
+.name{
+    font-family: 'Cairo', sans-serif;
+
+    position: absolute;
+    bottom: 10px;
+    left: 250px;
+    top: 260px;
+    margin-top: -1px;
+    font-size: 30px;
+    
+}
+.h11{
+    font-family: 'Cairo', sans-serif;
+    position: absolute;
+    bottom: 10px;
+    left: 260px;
+    top: 140px;
+    font-size: 30px;
+    z-index:1000;
+
+}
+.h33{
+    font-size: 30px;
+    font-family: 'Cairo', sans-serif;
+    position: absolute;
+    bottom: 10px;
+    left: 220px;
+    top: 200px;
+    z-index:1000;
+    
+} */
+
+
+body{
+
+    font-family: 'Cairo', sans-serif;
+}
+.name{
+    font-family: 'Cairo', sans-serif;
+    padding-top: 47px;
+   
+    
+    font-size: 25px;
+
+        
+        box-sizing: border-box;
+    }
+    .body{
+        background:#F3EFE4;
+        color:#42301C;
+        text-align:center;
+        width:680px;
+
+        height:400px;
+        margin-top: 10px;
+        position:relative;
+
+    }
+    #back{
+        height:400px;
+        width:670px;
+    }
+    #front{
+        height:400px;
+        width:670px;
+    }
+    #logo{
+        
+        
+
+        width:120px;
+    }
+    .lower{
+        background:#42301C;
+        color:#F3EFE4;
+        padding:15px;
+        /* margin:1rem; */
+        margin:0;
+        
+    }
+    
+    h1{
+        font-weight: bold;
+        font-size:30px;
+        margin:10px;
+        
+    }
+    .button {
+        margin-top: 3rem;
+    }
+    .h11{
+        position: absolute;
+        top: 175px;
+        right: 48.5%;
+        transform: translateX(50%);
+    }
+    .h33{
+        position: absolute;
+        top: 230px;
+        right: 48.5%;
+        transform: translateX(50%);
+
+    }
+</style>
+</html>

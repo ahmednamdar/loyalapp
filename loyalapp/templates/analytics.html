@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<script>
+var myData = {{ orders|safe }};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<body>
+    <div>
+  <canvas id="myChart"></canvas>
+  <label for="start_date">Start date:</label>
+<input type="date" id="start_date" name="start_date">
+
+<label for="end_date">End date:</label>
+<input type="date" id="end_date" name="end_date">
+<button  onClick="searchFilter()">Search</button>
+</div>
+<p class="max-customer"></p>
+<p class="max-customer-total"></p>
+<p class="max-date"></p>
+<p class="max-date-total"></p>
+<p class="max-table"></p>
+<p class="max-table-total"></p>
+</body>
+<script>
+  const customerDom = document.querySelector('.max-customer')
+  const customerTotalDom = document.querySelector('.max-customer-total')
+  const dateDom = document.querySelector('.max-date')
+  const dateDomTotal = document.querySelector('.max-date-total')
+  const tableDom = document.querySelector('.max-table')
+  const tableDomTotal = document.querySelector('.max-table-total')
+    let objState;
+    // fetch('/core/orders').then(res=>res.json()).then(
+    //     data=>{
+    //         console.log(JSON.parse(data))
+    //     }
+    // )
+   const reqObj =  getLabels(myData);
+   const stats = calculateOrdersStats(myData);
+  customerDom.textContent = `Highest Paying Customer :${stats.maxCustomer}`
+  customerTotalDom.textContent = `${stats.maxCustomer} Spent :${stats.maxCustomerTotal}`
+  dateDom.textContent = `Date of highest income:${stats.maxSalesDate}`
+  dateDomTotal.textContent = `on ${stats.maxSalesDate} we got  :${stats.maxSalesTotal}`
+  tableDom.textContent = `The highest earning table:${stats.maxTable}`
+  tableDomTotal.textContent = `Table ${stats.maxTable} generated :${stats.maxTableTotal}`
+   objState = reqObj;
+    const ctx = document.getElementById('myChart');
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(reqObj),
+      datasets: [{
+        label: 'Uses',
+        data: Object.values(reqObj),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  function searchFilter() {
+  const startDate = new Date(document.getElementById("start_date").value);
+  const endDate = new Date(document.getElementById("end_date").value);
+  const filteredArr = myData.filter(ele=>new Date(ele.date) > startDate && new Date(ele.date) < endDate);
+  const newSet = getLabels(filteredArr);
+  console.log(newSet)
+  updateChart(chart,objState,newSet);
+  const stats = calculateOrdersStats(newSet);
+  console.log(stats)
+  customerDom.textContent = `Highest Paying Customer :${stats.maxCustomer}`
+  customerTotalDom.textContent = `${stats.maxCustomer} Spent :${stats.maxCustomerTotal}`
+  dateDom.textContent = `Date of highest income:${stats.maxSalesDate}`
+  dateDomTotal.textContent = `on ${stats.maxSalesDate} we got  :${stats.maxSalesTotal}`
+  tableDom.textContent = `The highest earning table:${stats.maxTable}`
+  tableDomTotal.textContent = `Table ${stats.maxTable} generated :${stats.maxTableTotal}`
+  objState = newSet;
+  
+ 
+}
+
+function getLabels(arr) {
+   return arr.reduce((acc, obj) => {
+    const table = 'Table N.' + obj.table;
+    acc[table] = (acc[table] || 0) + 1;
+    return acc;
+  }, {});
+}
+function updateChart(chart,oldObj,newObj){
+
+    Object.keys(oldObj).forEach(ele=>{
+        chart.data.labels.pop();
+        chart.data.datasets.forEach((dataset) => {
+        dataset.data.pop();
+    });
+})
+    chart.update();
+    Object.keys(newObj).forEach(ele=>{
+        chart.data.labels.push(ele);
+    //     chart.data.datasets.forEach((dataset) => {
+    //     dataset.data.push(newObj[ele]);
+    // });
+    chart.data.datasets[0].data.push(newObj[ele])
+    })
+    chart.update();
+   
+    // console.log(chart.data)
+}
+function calculateOrdersStats(orders) {
+  // Calculate the total sales for each day
+  const salesByDay = {};
+  for (const order of orders) {
+    const date = order.date.slice(0, 10);
+    const total = parseFloat(order.total);
+    if (!salesByDay[date]) {
+      salesByDay[date] = { total: total, tables: {} };
+    } else {
+      salesByDay[date].total += total;
+    }
+    if (!salesByDay[date].tables[order.table]) {
+      salesByDay[date].tables[order.table] = { total: total, count: 1 };
+    } else {
+      salesByDay[date].tables[order.table].total += total;
+      salesByDay[date].tables[order.table].count++;
+    }
+  }
+
+  // Find the day with the highest total sales
+  let maxSalesDate = null;
+  let maxSalesTotal = 0;
+  for (const date in salesByDay) {
+    const total = salesByDay[date].total;
+    if (total > maxSalesTotal) {
+      maxSalesDate = date;
+      maxSalesTotal = total;
+    }
+  }
+
+  // Find the table with the most sales on the day of the highest total sales
+  let maxTable = null;
+  let maxTableTotal = 0;
+  for (const table in salesByDay[maxSalesDate].tables) {
+    const total = salesByDay[maxSalesDate].tables[table].total;
+    if (total > maxTableTotal) {
+      maxTable = table;
+      maxTableTotal = total;
+    }
+  }
+
+  // Find the customer who spent the most in all orders
+  const customers = {};
+  for (const order of orders) {
+    const name = order.name;
+    const total = parseFloat(order.total);
+    if (!customers[name]) {
+      customers[name] = total;
+    } else {
+      customers[name] += total;
+    }
+  }
+  let maxCustomer = null;
+  let maxCustomerTotal = 0;
+  for (const name in customers) {
+    const total = customers[name];
+    if (total > maxCustomerTotal) {
+      maxCustomer = name;
+      maxCustomerTotal = total;
+    }
+  }
+
+  return {
+    maxSalesDate: maxSalesDate,
+    maxSalesTotal: maxSalesTotal,
+    maxTable: maxTable,
+    maxTableTotal: maxTableTotal,
+    maxCustomer: maxCustomer,
+    maxCustomerTotal: maxCustomerTotal,
+  };
+}
+
+</script>
+</html>
